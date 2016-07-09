@@ -1,6 +1,14 @@
 # Events
 
-**TODO: Add description**
+Scheduler and worker queue implementation loading events from EWS and Google calendar and displaying them in a nice table.
+
+*Features:*
+
+* Load events from Google or EWS calendar.
+* Automatically update EWS calendar every 15 minutes.
+* Force refresh events.
+* Report errors during refreshing.
+* Print loaded events as a table.
 
 ## Installation
 
