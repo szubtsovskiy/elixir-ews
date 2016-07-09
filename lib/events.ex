@@ -1,0 +1,2 @@
+defmodule Events do
+end
