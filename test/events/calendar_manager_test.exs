@@ -56,7 +56,25 @@ defmodule Events.CalendarManagerTest do
     assert commands == []
   end
 
-  # TODO: test handle_info to make sure queue is not full when there are workers
+  test ":ready schedules next command if queue is not empty" do
+    {:noreply, _} = handle_info({:ready, self}, {[], [{:fetch, calendar}]})
+    receive do
+      {:fetch, cal} -> assert cal == calendar
+      after 1000 -> flunk "Did not receive :fetch message"
+    end
+  end
+
+  test ":ready places worker in pool if queue is empty" do
+    {:noreply, state} = handle_info({:ready, self}, {[], []})
+    {workers, _commands} = state
+    assert workers == [self]
+  end
+
+  test ":ready appends worker to the end of the pool if queue is empty" do
+    {:noreply, state} = handle_info({:ready, self}, {[self], []})
+    {workers, _commands} = state
+    assert workers == [self, self]
+  end
 
   defp calendar(r_count \\ 1) do
     {"calendar" <> String.duplicate("r", r_count - 1)}

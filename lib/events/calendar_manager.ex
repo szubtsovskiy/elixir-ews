@@ -90,13 +90,13 @@ defmodule Events.CalendarManager do
     {:noreply, {workers, updated_queue}}
   end
 
-  def handle_info({:ready, pid}, [workers, []]) do
-    {:noreply, [[pid | workers], []]}
+  def handle_info({:ready, pid}, {workers, []}) do
+    {:noreply, {[pid | workers], []}}
   end
 
-  def handle_info({:ready, pid}, [workers, [cmd | commands]]) do
+  def handle_info({:ready, pid}, {workers, [cmd | commands]}) do
     send pid, cmd
-    {:noreply, [workers, commands]}
+    {:noreply, {workers, commands}}
   end
 
   ### PRIVATE API
