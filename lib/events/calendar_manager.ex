@@ -33,7 +33,7 @@ defmodule Events.CalendarManager do
   def add(calendar) do
     case valid?(calendar) do
       false -> {:error, :wrong_format}
-      true -> GenServer.cast(self, {:add, {calendar}})
+      true -> GenServer.cast(self, {:add, calendar})
     end
   end
 
@@ -43,7 +43,7 @@ defmodule Events.CalendarManager do
   def refresh(calendar) do
     case valid?(calendar) do
       false -> {:error, :wrong_format}
-      true -> GenServer.cast(self, {:add, {calendar, :refresh}})
+      true -> GenServer.cast(self, {:refresh, calendar})
     end
   end
 
@@ -51,7 +51,7 @@ defmodule Events.CalendarManager do
   Removes calendar from the internal queue. See `add/1` for information about calendar format and examples.
   """
   def remove(calendar) do
-    GenServer.cast(self, {:remove, {calendar}})
+    GenServer.cast(self, {:remove, calendar})
   end
 
 
@@ -64,24 +64,28 @@ defmodule Events.CalendarManager do
     {:ok, {[], []}}
   end
 
-  def handle_cast({:add, new_cal_spec}, {[], queue}) do
-    {:noreply, {[], queue ++ [new_cal_spec]}}
+  def handle_cast({:add, cal}, state) do
+    case state do
+      {[], commands} -> {:noreply, {[], commands ++ [{:fetch, cal}]}}
+      {[worker | rest], commands} ->
+        schedule(worker, {:fetch, cal})
+        {:noreply, {rest, commands}}
+    end
   end
 
-  def handle_cast({:add, new_cal_spec}, {[pid | other_workers], []}) do
-    schedule(pid, {new_cal_spec})
-    {:noreply, {other_workers, []}}
-  end
-
-  def handle_cast({:add, new_cal_spec}, {[pid | other_workers], [cal_spec | other_calendars]}) do
-    schedule(pid, cal_spec)
-    {:noreply, {other_workers, other_calendars ++ [new_cal_spec]}}
+  def handle_cast({:refresh, cal}, state) do
+    case state do
+      {[], commands} -> {:noreply, {[], commands ++ [{:refresh, cal}]}}
+      {[worker | rest], commands} ->
+        schedule(worker, {:refresh, cal})
+        {:noreply, {rest, commands}}
+    end
   end
 
   def handle_cast({:remove, cal}, {workers, queue}) do
     updated_queue = queue
-                      |> List.delete({cal})
-                      |> List.delete({cal, :refresh})
+                      |> List.delete({:fetch, cal})
+                      |> List.delete({:refresh, cal})
 
     {:noreply, {workers, updated_queue}}
   end
@@ -90,9 +94,9 @@ defmodule Events.CalendarManager do
     {:noreply, [[pid | workers], []]}
   end
 
-  def handle_info({:ready, pid}, [workers, [cal_spec | other_calendars]]) do
-    schedule(pid, cal_spec)
-    {:noreply, [workers, other_calendars]}
+  def handle_info({:ready, pid}, [workers, [op | commands]]) do
+    schedule(pid, op)
+    {:noreply, [workers, commands]}
   end
 
   ### PRIVATE API
@@ -101,11 +105,8 @@ defmodule Events.CalendarManager do
   defp valid?({:google, _id, {_refresh_token}, _refreshed_at}), do: true
   defp valid?(_), do: false
 
-  defp schedule(pid, {cal}) do
-    send pid, {:fetch, cal}
+  defp schedule(pid, command) do
+    send pid, command
   end
 
-  defp schedule(pid, {cal, :refresh}) do
-    send pid, {:fetch, cal, :force}
-  end
 end
