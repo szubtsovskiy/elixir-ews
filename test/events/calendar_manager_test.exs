@@ -2,7 +2,7 @@ defmodule Events.CalendarManagerTest do
   use ExUnit.Case
   doctest Events.CalendarManager
 
-  import Events.CalendarManager, only: [handle_cast: 2]
+  import Events.CalendarManager, only: [handle_cast: 2, handle_info: 2]
 
   test ":add schedules fetching if there is a worker" do
     {:noreply, _state} = handle_cast({:add, calendar}, {[self], []})

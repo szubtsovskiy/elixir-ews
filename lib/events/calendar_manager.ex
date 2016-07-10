@@ -68,7 +68,7 @@ defmodule Events.CalendarManager do
     case state do
       {[], commands} -> {:noreply, {[], commands ++ [{:fetch, cal}]}}
       {[worker | rest], commands} ->
-        schedule(worker, {:fetch, cal})
+        send worker, {:fetch, cal}
         {:noreply, {rest, commands}}
     end
   end
@@ -77,7 +77,7 @@ defmodule Events.CalendarManager do
     case state do
       {[], commands} -> {:noreply, {[], commands ++ [{:refresh, cal}]}}
       {[worker | rest], commands} ->
-        schedule(worker, {:refresh, cal})
+        send worker, {:refresh, cal}
         {:noreply, {rest, commands}}
     end
   end
@@ -94,8 +94,8 @@ defmodule Events.CalendarManager do
     {:noreply, [[pid | workers], []]}
   end
 
-  def handle_info({:ready, pid}, [workers, [op | commands]]) do
-    schedule(pid, op)
+  def handle_info({:ready, pid}, [workers, [cmd | commands]]) do
+    send pid, cmd
     {:noreply, [workers, commands]}
   end
 
@@ -104,9 +104,5 @@ defmodule Events.CalendarManager do
   defp valid?({:ews, _id, {_endpoint, _user, _password}, _refreshed_at}), do: true
   defp valid?({:google, _id, {_refresh_token}, _refreshed_at}), do: true
   defp valid?(_), do: false
-
-  defp schedule(pid, command) do
-    send pid, command
-  end
 
 end
