@@ -1,5 +1,6 @@
 defmodule Events.CalendarManagerTest do
   use ExUnit.Case
+  use Timex
   doctest Events.CalendarManager
 
   import Events.CalendarManager, only: [handle_cast: 2, handle_info: 2]
@@ -76,8 +77,78 @@ defmodule Events.CalendarManagerTest do
     assert workers == [self, self]
   end
 
-  defp calendar(r_count \\ 1) do
-    {"calendar" <> String.duplicate("r", r_count - 1)}
+  describe "handle_info({:answer, ...}, ...)" do
+
+    test "discards Google calendar when there is no worker and no command" do
+      test_answer(calendar: google_calendar, incoming_state: {[], []}, expected_state: {[], []})
+    end
+
+    test "discards Google calendar when there is a worker and no command" do
+      test_answer(calendar: google_calendar, incoming_state: {[self], []}, expected_state: {[self], []})
+    end
+
+    test "discards Google calendar when there is no worker and a command" do
+      with cal = calendar do
+        test_answer(calendar: google_calendar, incoming_state: {[], [{:fetch, cal}]}, expected_state: {[], [{:fetch, cal}]})
+      end
+    end
+
+    test "discards Google calendar when there is a worker and a command" do
+      with cal = calendar do
+        test_answer(calendar: google_calendar, incoming_state: {[self], [{:fetch, cal}]}, expected_state: {[self], [{:fetch, cal}]})
+      end
+    end
+
+    test "places EWS-calendar in the queue when there is no worker" do
+      with cal = ews_calendar do
+        test_answer(calendar: cal, incoming_state: {[], []}, expected_state: {[], [{:fetch, cal}]})
+      end
+    end
+
+    test "places EWS-calendar in the queue when there is a worker" do
+      with cal = ews_calendar do
+        test_answer(calendar: cal, incoming_state: {[self], []}, expected_state: {[self], [{:fetch, cal}]})
+      end
+    end
+
+    test "appends EWS-calendar to the end of the queue when there is no worker" do
+      with cal1 = ews_calendar, cal2 = calendar do
+        test_answer(calendar: cal1, incoming_state: {[], [{:fetch, cal2}]}, expected_state: {[], [{:fetch, cal2}, {:fetch, cal1}]})
+      end
+    end
+
+    test "appends EWS-calendar to the end of the queue when there is a worker" do
+      with cal1 = ews_calendar, cal2 = calendar do
+        test_answer(calendar: cal1, incoming_state: {[self], [{:fetch, cal2}]}, expected_state: {[self], [{:fetch, cal2}, {:fetch, cal1}]})
+      end
+    end
+
+    defp test_answer([calendar: cal, incoming_state: incoming_state, expected_state: {expected_workers, expected_commands}]) do
+      {:noreply, state} = handle_info({:answer, cal, DateTime.now, nil}, incoming_state)
+      {workers, commands} = state
+      assert workers == expected_workers
+      assert commands == expected_commands
+    end
+  end
+
+  # TODO: test refreshed_at updated
+
+  # TODO: test handle_info {:answer, ...} with events
+
+  # TODO: refactor and group other tests
+
+  ### PRIVATE API
+
+  defp calendar(r_count \\ 1, kind  \\ :test) do
+    {kind, r_count, "calendar" <> String.duplicate("r", r_count - 1), nil}
+  end
+
+  defp google_calendar(r_count \\ 1) do
+    calendar(r_count, :google)
+  end
+
+  defp ews_calendar(r_count \\ 1) do
+    calendar(r_count, :ews)
   end
 
 end

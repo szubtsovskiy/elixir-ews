@@ -99,6 +99,14 @@ defmodule Events.CalendarManager do
     {:noreply, {workers, commands}}
   end
 
+  def handle_info({:answer, calendar, _new_refreshed_at, _events}, {workers, commands}) do
+    new_state = case calendar do
+      {:ews, _, _, _} -> {workers, commands ++ [{:fetch, calendar}]}
+      {:google, _, _, _} -> {workers, commands}
+    end
+    {:noreply, new_state}
+  end
+
   ### PRIVATE API
 
   defp valid?({:ews, _id, {_endpoint, _user, _password}, _refreshed_at}), do: true
