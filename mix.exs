@@ -15,7 +15,7 @@ defmodule Events.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :timex, :inets, :soap]]
+    [applications: [:logger, :timex, :httpoison]]
   end
 
   # Dependencies can be Hex packages:
@@ -29,7 +29,7 @@ defmodule Events.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:timex, "~> 2.2"},
-     {:soap, github: "bet365/soap"},
+     {:httpoison, "~> 0.9.0"},
      {:ex_doc, "~> 0.11"},
      {:earmark, ">= 0.0.0"}]
   end
