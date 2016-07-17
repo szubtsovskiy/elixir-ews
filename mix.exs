@@ -30,6 +30,7 @@ defmodule Events.Mixfile do
   defp deps do
     [{:timex, "~> 2.2"},
      {:httpoison, "~> 0.9.0"},
+     {:exml, "~> 0.1.0"},
      {:ex_doc, "~> 0.11"},
      {:earmark, ">= 0.0.0"}]
   end
