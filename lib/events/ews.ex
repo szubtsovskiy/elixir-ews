@@ -161,6 +161,4 @@ defmodule Events.Ews do
     """
   end
 
-  # <t:ItemId Id="AAMkAGJmMmQyMzg0LTA1OGUtNGM5YS1iYzU1LTI3NzYwMWE5YmYwNQBGAAAAAACo+B8510q+T6TFoE1voplCBwDytAeFSpKiQqyxJEYht4EiAAAAEwvJAADytAeFSpKiQqyxJEYht4EiAAAWj3j2AAA=" ChangeKey="DwAAABYAAADytAeFSpKiQqyxJEYht4EiAAAWj4kv"/>
-
 end
