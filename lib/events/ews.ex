@@ -8,6 +8,8 @@ defmodule Events.Ews do
       |> find_items(credentials)
   end
 
+  # PRIVATE API
+
   defp get_folder(folder_id, {endpoint, user, password}) do
     encoded_credentials = Base.encode64("#{user}:#{password}")
     req_body = get_folder_request(folder_id)
@@ -32,7 +34,15 @@ defmodule Events.Ews do
     case HTTPoison.post(endpoint, req_body, req_headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         with doc = Exml.parse(body) do
-          {:ok, Exml.get(doc, "//t:CalendarItem/t:Subject")}
+          items = for id <- Exml.get(doc, "//t:CalendarItem/t:ItemId/@Id"), into: [] do
+            %{"id" => id,
+              "subject" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Subject"),
+              "start" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Start"),
+              "end" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:End"),
+              "location" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Location"),
+              "organizer" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Organizer/t:Mailbox/t:Name")}
+          end
+          {:ok, items}
         end
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, :not_found}
