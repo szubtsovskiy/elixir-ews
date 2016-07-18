@@ -25,8 +25,6 @@ defmodule Events.CalendarManager do
       iex> alias Events.CalendarManager
       iex> CalendarManager.add({:ews, "some id", {"https://example.org/EWS/Exchange.asmx", "user", "password"}, Timex.datetime({{2015, 11, 30}, {13, 30, 30}})})
       :ok
-      iex> CalendarManager.add({:google, "some id", {"refresh_token"}, nil})
-      :ok
       iex> CalendarManager.add({:ews, "some id", {"refresh_token"}, nil})
       {:error, :wrong_format}
   """
@@ -102,7 +100,6 @@ defmodule Events.CalendarManager do
   def handle_info({:answer, calendar, _new_refreshed_at, _events}, {workers, commands}) do
     new_state = case calendar do
       {:ews, _, _, _} -> {workers, commands ++ [{:fetch, calendar}]}
-      {:google, _, _, _} -> {workers, commands}
     end
     {:noreply, new_state}
   end
@@ -110,7 +107,6 @@ defmodule Events.CalendarManager do
   ### PRIVATE API
 
   defp valid?({:ews, _id, {_endpoint, _user, _password}, _refreshed_at}), do: true
-  defp valid?({:google, _id, {_refresh_token}, _refreshed_at}), do: true
   defp valid?(_), do: false
 
 end

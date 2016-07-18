@@ -79,26 +79,6 @@ defmodule Events.CalendarManagerTest do
 
   describe "handle_info({:answer, ...}, ...)" do
 
-    test "discards Google calendar when there is no worker and no command" do
-      test_answer(calendar: google_calendar, incoming_state: {[], []}, expected_state: {[], []})
-    end
-
-    test "discards Google calendar when there is a worker and no command" do
-      test_answer(calendar: google_calendar, incoming_state: {[self], []}, expected_state: {[self], []})
-    end
-
-    test "discards Google calendar when there is no worker and a command" do
-      with cal = calendar do
-        test_answer(calendar: google_calendar, incoming_state: {[], [{:fetch, cal}]}, expected_state: {[], [{:fetch, cal}]})
-      end
-    end
-
-    test "discards Google calendar when there is a worker and a command" do
-      with cal = calendar do
-        test_answer(calendar: google_calendar, incoming_state: {[self], [{:fetch, cal}]}, expected_state: {[self], [{:fetch, cal}]})
-      end
-    end
-
     test "places EWS-calendar in the queue when there is no worker" do
       with cal = ews_calendar do
         test_answer(calendar: cal, incoming_state: {[], []}, expected_state: {[], [{:fetch, cal}]})
@@ -141,10 +121,6 @@ defmodule Events.CalendarManagerTest do
 
   defp calendar(r_count \\ 1, kind  \\ :test) do
     {kind, r_count, "calendar" <> String.duplicate("r", r_count - 1), nil}
-  end
-
-  defp google_calendar(r_count \\ 1) do
-    calendar(r_count, :google)
   end
 
   defp ews_calendar(r_count \\ 1) do
