@@ -12,7 +12,7 @@ defmodule Events.CalendarManager do
   Starts manager and triggers initialization of worker processes.
   """
   def start_link() do
-    GenServer.start_link(__MODULE__, [Events.EventLoader, :init, 10])
+    GenServer.start_link(__MODULE__, [Events.EventFetcher, :init, 10])
   end
 
   ### PUBLIC API
