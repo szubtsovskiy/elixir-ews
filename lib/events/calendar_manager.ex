@@ -12,7 +12,7 @@ defmodule Events.CalendarManager do
   Starts manager and triggers initialization of worker processes.
   """
   def start_link() do
-    GenServer.start_link(__MODULE__, [Events.EventFetcher, :init, 10])
+    GenServer.start_link(__MODULE__, [Events.EventFetcher, :init, 2])
   end
 
   ### PUBLIC API
@@ -100,8 +100,9 @@ defmodule Events.CalendarManager do
 
   def handle_info({:answer, calendar, new_refreshed_at, events}, {workers, commands}) do
     if events != nil do
-      IO.puts "Got events: #{inspect events}"
+      Events.TableFormatter.format(events)
     end
+
     new_state = case calendar do
       {:ews, id, credentials, _refreshed_at} ->
         {workers, commands ++ [{:fetch, {:ews, id, credentials, new_refreshed_at}}]}

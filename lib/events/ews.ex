@@ -1,7 +1,5 @@
 defmodule Events.Ews do
 
-  # "https://mail.derivco.co.uk/EWS/Exchange.asmx"
-
   def get_calendar_events(endpoint, user, password) do
     credentials = {endpoint, user, password}
     get_folder(:calendar, credentials)
@@ -52,17 +50,18 @@ defmodule Events.Ews do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         with doc = Exml.parse(body) do
           items = for id <- item_ids, into: [] do
+            item_selector = "//m:GetItemResponseMessage/m:Items/t:CalendarItem[t:ItemId/@Id='#{id}']"
             %{"id" => id,
-              "subject" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Subject"),
-              "start" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Start"),
-              "end" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:End"),
-              "time_zone" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:TimeZone"),
-              "all_day" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:IsAllDayEvent"),
-              "cancelled" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:IsCancelled"),
-              "recurring" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:IsRecurring"),
-              "my_response_type" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:MyResponseType"),
-              "location" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Location"),
-              "organizer" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Organizer/t:Mailbox/t:EmailAddress")}
+              "subject" => Exml.get(doc, item_selector <> "/t:Subject"),
+              "start" => Exml.get(doc, item_selector <> "/t:Start"),
+              "end" => Exml.get(doc, item_selector <> "/t:End"),
+              "time_zone" => Exml.get(doc, item_selector <> "/t:TimeZone"),
+              "all_day" => Exml.get(doc, item_selector <> "/t:IsAllDayEvent"),
+              "cancelled" => Exml.get(doc, item_selector <> "/t:IsCancelled"),
+              "recurring" => Exml.get(doc, item_selector <> "/t:IsRecurring"),
+              "my_response_type" => Exml.get(doc, item_selector <> "/t:MyResponseType"),
+              "location" => Exml.get(doc, item_selector <> "/t:Location"),
+              "organizer" => Exml.get(doc, item_selector <> "/t:Organizer/t:Mailbox/t:EmailAddress")}
           end
           {:ok, items}
         end
@@ -72,30 +71,6 @@ defmodule Events.Ews do
         {:error, reason}
     end
 
-  end
-
-  defp find_items({:ok, {id}} = _folder, {endpoint, user, password}) do
-    encoded_credentials = Base.encode64("#{user}:#{password}")
-    req_body = find_item_request({id})
-    req_headers = %{"Authorization" => "Basic #{encoded_credentials}", "Content-Type" => "text/xml"}
-    case HTTPoison.post(endpoint, req_body, req_headers) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        with doc = Exml.parse(body) do
-          items = for id <- Exml.get(doc, "//t:CalendarItem/t:ItemId/@Id"), into: [] do
-            %{"id" => id,
-              "subject" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Subject"),
-              "start" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Start"),
-              "end" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:End"),
-              "location" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Location"),
-              "organizer" => Exml.get(doc, "//t:CalendarItem[t:ItemId/@Id='#{id}']/t:Organizer/t:Mailbox/t:Name")}
-          end
-          {:ok, items}
-        end
-      {:ok, %HTTPoison.Response{status_code: 404}} ->
-        {:error, :not_found}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
-    end
   end
 
   defp get_folder_request(folder_id) do
