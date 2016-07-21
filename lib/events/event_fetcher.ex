@@ -27,11 +27,20 @@ defmodule Events.EventFetcher do
   defp loop(manager) do
     send manager, {:ready, self}
     receive do
-      {:fetch, cal} ->
-        IO.puts "fetch #{inspect cal}"
+      {:fetch, {:ews, _id, {endpoint, user, password}, refreshed_at} = cal} ->
+        cond do
+          seconds_to_next_update(refreshed_at) == 0 ->
+            {:ok, events} = Events.Ews.get_calendar_events(endpoint, user, password)
+            send manager, {:answer, cal, now, events}
+            loop(manager)
+          true ->
+            send manager, {:answer, cal, refreshed_at, nil}
+            loop(manager)
+        end
         loop(manager)
-      {:refresh, cal} ->
-        IO.puts "refresh #{inspect cal}"
+      {:refresh, {:ews, _id, {endpoint, user, password}, _refreshed_at} = cal} ->
+        {:ok, events} = Events.Ews.get_calendar_events(endpoint, user, password)
+        send manager, {:answer, cal, now, events}
         loop(manager)
     end
   end

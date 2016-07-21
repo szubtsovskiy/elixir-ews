@@ -31,7 +31,7 @@ defmodule Events.CalendarManager do
   def add(calendar) do
     case valid?(calendar) do
       false -> {:error, :wrong_format}
-      true -> GenServer.cast(self, {:add, calendar})
+      true -> GenServer.cast(:calendar_manager, {:add, calendar})
     end
   end
 
@@ -41,7 +41,7 @@ defmodule Events.CalendarManager do
   def refresh(calendar) do
     case valid?(calendar) do
       false -> {:error, :wrong_format}
-      true -> GenServer.cast(self, {:refresh, calendar})
+      true -> GenServer.cast(:calendar_manager, {:refresh, calendar})
     end
   end
 
@@ -49,7 +49,7 @@ defmodule Events.CalendarManager do
   Removes calendar from the internal queue. See `add/1` for information about calendar format and examples.
   """
   def remove(calendar) do
-    GenServer.cast(self, {:remove, calendar})
+    GenServer.cast(:calendar_manager, {:remove, calendar})
   end
 
 
@@ -59,6 +59,7 @@ defmodule Events.CalendarManager do
     Logger.info "Starting calendar manager with #{count} workers"
     (1..count)
         |> Enum.each(fn _ -> spawn(module, func, [self]) end)
+    Process.register(self, :calendar_manager)
     {:ok, {[], []}}
   end
 
@@ -97,9 +98,13 @@ defmodule Events.CalendarManager do
     {:noreply, {workers, commands}}
   end
 
-  def handle_info({:answer, calendar, _new_refreshed_at, _events}, {workers, commands}) do
+  def handle_info({:answer, calendar, new_refreshed_at, events}, {workers, commands}) do
+    if events != nil do
+      IO.puts "Got events: #{inspect events}"
+    end
     new_state = case calendar do
-      {:ews, _, _, _} -> {workers, commands ++ [{:fetch, calendar}]}
+      {:ews, id, credentials, _refreshed_at} ->
+        {workers, commands ++ [{:fetch, {:ews, id, credentials, new_refreshed_at}}]}
     end
     {:noreply, new_state}
   end
