@@ -46,7 +46,7 @@ defmodule Events.Ews do
     encoded_credentials = Base.encode64("#{user}:#{password}")
     req_body = get_item_request(item_ids)
     req_headers = %{"Authorization" => "Basic #{encoded_credentials}", "Content-Type" => "text/xml"}
-    case HTTPoison.post(endpoint, req_body, req_headers) do
+    case HTTPoison.post(endpoint, req_body, req_headers, recv_timeout: :infinity) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         with doc = Exml.parse(body) do
           items = for id <- item_ids, into: [] do
