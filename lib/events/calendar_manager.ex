@@ -99,7 +99,7 @@ defmodule Events.CalendarManager do
   end
 
   def handle_info({:answer, calendar, new_refreshed_at, events}, {workers, commands}) do
-    if events != nil do
+    unless events == nil do
       Events.TableFormatter.format(events)
     end
 
