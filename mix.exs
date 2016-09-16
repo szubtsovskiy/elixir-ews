@@ -15,7 +15,8 @@ defmodule Events.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :timex, :httpoison]]
+    [applications: [:logger, :timex, :httpoison],
+     mod: {Events, []}]
   end
 
   # Dependencies can be Hex packages:
