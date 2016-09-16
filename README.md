@@ -1,11 +1,12 @@
 # Events
 
-Scheduler and worker queue implementation loading events from EWS calendar and displaying them in a nice table.
+An implementation capable of fetching events from Microsoft Exchange and printing them out.
 
 *Features:*
 
-* Fetch events from a EWS calendar.
-* Automatically update EWS calendar every 15 minutes.
-* Force refresh events.
-* Print fetched events as a table.
+* Register a EWS calendar.
+* Automatically fetch events from the calendar every 15 minutes.
+* Force fetching events.
+* Print fetched events.
+
 
