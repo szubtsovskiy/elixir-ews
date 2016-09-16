@@ -104,7 +104,7 @@ defmodule Events.CalendarManagerTest do
     end
 
     defp test_answer([calendar: cal, incoming_state: incoming_state, expected_state: {expected_workers, expected_commands}]) do
-      {:noreply, state} = handle_info({:answer, cal, DateTime.now, nil}, incoming_state)
+      {:noreply, state} = handle_info({:answer, cal, nil, nil}, incoming_state)
       {workers, commands} = state
       assert workers == expected_workers
       assert commands == expected_commands
